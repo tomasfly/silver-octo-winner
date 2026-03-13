@@ -1,0 +1,84 @@
+import fs from "node:fs";
+import path from "node:path";
+import { spawn } from "node:child_process";
+
+function formatRunTs(date = new Date()): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(
+    date.getDate()
+  )}-${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
+}
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function waitForAppiumStatus(url: string, timeoutMs = 30000): Promise<void> {
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    try {
+      const res = await fetch(url);
+      if (res.ok) {
+        return;
+      }
+    } catch {
+      // ignore retries
+    }
+    await wait(1000);
+  }
+  throw new Error(`Appium no respondio en ${url} dentro de ${timeoutMs}ms`);
+}
+
+async function main(): Promise<void> {
+  const runDir = path.resolve(process.cwd(), "reports", `run-${formatRunTs()}`);
+  const appiumDir = path.join(runDir, "appium");
+  const appiumPort = "4725";
+
+  fs.mkdirSync(appiumDir, { recursive: true });
+
+  const appiumLogPath = path.join(appiumDir, "appium.log");
+
+  const appium = spawn(
+    "appium",
+    ["--base-path", "/", "--port", appiumPort, "--log", appiumLogPath],
+    {
+      cwd: process.cwd(),
+      env: process.env,
+      shell: true,
+      stdio: "inherit",
+    }
+  );
+
+  try {
+    await waitForAppiumStatus(`http://127.0.0.1:${appiumPort}/status`, 45000);
+
+    const mocha = spawn(
+      "npx",
+      ["mocha", "-r", "ts-node/register", "src/tests/**/*.spec.ts", "--timeout", "240000"],
+      {
+        cwd: process.cwd(),
+        env: {
+          ...process.env,
+          REPORT_RUN_DIR: runDir,
+          APPIUM_PORT: appiumPort,
+        },
+        shell: true,
+        stdio: "inherit",
+      }
+    );
+
+    const mochaExitCode: number = await new Promise((resolve, reject) => {
+      mocha.on("error", reject);
+      mocha.on("exit", (code) => resolve(code ?? 1));
+    });
+
+    process.exitCode = mochaExitCode;
+  } finally {
+    appium.kill("SIGTERM");
+  }
+}
+
+main().catch((error) => {
+  console.error("[REPORT RUNNER] Error:", error);
+  process.exitCode = 1;
+});

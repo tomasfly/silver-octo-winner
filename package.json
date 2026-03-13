@@ -1,0 +1,21 @@
+{
+  "name": "tribbu-onboarding-qa",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Automatizacion QA onboarding (Appium + TypeScript)",
+  "scripts": {
+    "test:smoke": "mocha -r ts-node/register src/tests/**/*.spec.ts --timeout 240000",
+    "test:dni": "ts-node src/scripts/testDniProvider.ts",
+    "test:report": "ts-node src/scripts/runWithReports.ts",
+    "test": "npm run test:smoke"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^22.13.10",
+    "mocha": "^10.8.2",
+    "playwright-core": "^1.52.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.2",
+    "webdriverio": "^8.43.0"
+  }
+}
