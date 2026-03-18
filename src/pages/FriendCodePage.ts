@@ -10,6 +10,8 @@ export class FriendCodePage extends BasePage {
     });
 
     await friendCodeInput.click();
+    // add a sleep of 3 seconds to ensure the keyboard is fully visible before typing
+    await this.driver.pause(3000);
     await friendCodeInput.setValue("MARIOM-0956");
     await this.waitAndTapText("Verify");
     await this.waitForText("Code successfully verified");

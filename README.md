@@ -50,6 +50,43 @@ adb -s emulator-5554 shell getprop persist.sys.timezone
 adb -s emulator-5554 shell date
 ```
 
+### Variables de entorno soportadas
+
+El proyecto permite sobreescribir configuracion sin tocar codigo.
+
+| Variable | Default | Para que sirve |
+|---|---|---|
+| `APPIUM_HOST` | `127.0.0.1` | Host del servidor Appium para la sesion de WebdriverIO |
+| `APPIUM_PORT` | `4723` | Puerto del servidor Appium (en `test:report` se usa `4725`) |
+| `APPIUM_PATH` | `/` | Base path de Appium |
+| `ANDROID_UDID` | `emulator-5554` | Dispositivo objetivo para ADB y la sesion Appium |
+| `APK_PATH` | `resources/tribbu.apk` | Ruta absoluta o relativa al APK bajo prueba |
+| `APP_PACKAGE` | `com.hoopcarpool.staging` | Package Android de la app |
+| `APP_ACTIVITY` | `com.hoopcarpool.core.features.main.MainHoopActivity` | Activity inicial para abrir la app |
+| `ADB_PATH` | Ruta local de `adb.exe` configurada en el proyecto | Binario ADB usado por los pre-hooks de ubicacion/timezone |
+
+Ejemplos en PowerShell (solo para la terminal actual):
+
+```powershell
+$env:ANDROID_UDID = "emulator-5556"
+$env:APPIUM_PORT = "4723"
+$env:APK_PATH = "C:\apk\tribbu.apk"
+npm test
+```
+
+Ejemplo para corrida con reportes en otro dispositivo:
+
+```powershell
+$env:ANDROID_UDID = "emulator-5556"
+npm run test:report
+```
+
+Para limpiar una variable en PowerShell:
+
+```powershell
+Remove-Item Env:ANDROID_UDID
+```
+
 ### Comandos de ejecucion
 
 ### Como levantar Appium

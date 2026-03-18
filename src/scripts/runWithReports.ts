@@ -2,6 +2,29 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawn } from "node:child_process";
 
+function quoteArg(arg: string): string {
+  if (/[\s"]/g.test(arg)) {
+    return `"${arg.replace(/"/g, '\\"')}"`;
+  }
+  return arg;
+}
+
+function spawnCommand(command: string, env: NodeJS.ProcessEnv) {
+  if (process.platform === "win32") {
+    return spawn("cmd.exe", ["/d", "/s", "/c", command], {
+      cwd: process.cwd(),
+      env,
+      stdio: "inherit",
+    });
+  }
+
+  return spawn("sh", ["-lc", command], {
+    cwd: process.cwd(),
+    env,
+    stdio: "inherit",
+  });
+}
+
 function formatRunTs(date = new Date()): string {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(
@@ -37,33 +60,41 @@ async function main(): Promise<void> {
   fs.mkdirSync(appiumDir, { recursive: true });
 
   const appiumLogPath = path.join(appiumDir, "appium.log");
-
-  const appium = spawn(
+  const appiumCmd = [
     "appium",
-    ["--base-path", "/", "--port", appiumPort, "--log", appiumLogPath],
-    {
-      cwd: process.cwd(),
-      env: process.env,
-      shell: true,
-      stdio: "inherit",
-    }
-  );
+    "--base-path",
+    "/",
+    "--port",
+    appiumPort,
+    "--log",
+    quoteArg(appiumLogPath),
+  ].join(" ");
+
+  const appium = spawnCommand(appiumCmd, process.env);
+
+  const appiumStartup = new Promise<void>((resolve, reject) => {
+    appium.once("spawn", resolve);
+    appium.once("error", (error) => {
+      reject(
+        new Error(
+          `No se pudo iniciar Appium (appium). Verifica instalacion global y PATH. Causa: ${
+            error instanceof Error ? error.message : String(error)
+          }`
+        )
+      );
+    });
+  });
 
   try {
+    await appiumStartup;
     await waitForAppiumStatus(`http://127.0.0.1:${appiumPort}/status`, 45000);
 
-    const mocha = spawn(
-      "npx",
-      ["mocha", "-r", "ts-node/register", "src/tests/**/*.spec.ts", "--timeout", "240000"],
+    const mocha = spawnCommand(
+      "npx mocha -r ts-node/register src/tests/**/*.spec.ts --timeout 240000",
       {
-        cwd: process.cwd(),
-        env: {
-          ...process.env,
-          REPORT_RUN_DIR: runDir,
-          APPIUM_PORT: appiumPort,
-        },
-        shell: true,
-        stdio: "inherit",
+        ...process.env,
+        REPORT_RUN_DIR: runDir,
+        APPIUM_PORT: appiumPort,
       }
     );
 
