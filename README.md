@@ -52,6 +52,54 @@ adb -s emulator-5554 shell date
 
 ### Comandos de ejecucion
 
+### Como levantar Appium
+
+Modo manual (recomendado para `npm test`):
+
+1. Levantar Appium en una terminal:
+
+```bash
+appium --base-path /
+```
+
+2. Verificar que responde:
+
+```bash
+curl http://127.0.0.1:4723/status
+```
+
+3. En otra terminal, ejecutar los tests:
+
+```bash
+npm test
+```
+
+Notas:
+
+- Si el puerto `4723` esta ocupado, cierra el proceso existente o usa otro puerto.
+- Para detener Appium manual, usa `Ctrl + C` en su terminal.
+
+Modo automatico con reportes:
+
+- `npm run test:report` levanta Appium automaticamente en puerto `4725`, ejecuta pruebas y lo cierra al terminar.
+
+### Pre-commit checks y convención de commits
+
+El repositorio usa `husky` + `commitlint` para validar calidad antes de cada commit.
+
+- Hook `pre-commit`: ejecuta `npm run lint`.
+- Hook `commit-msg`: valida formato Conventional Commits (`feat:`, `fix:`, `chore:`, etc.).
+
+Ejemplos validos:
+
+- `feat: add friend code validation step`
+- `fix: stabilize stale element on DNI page`
+- `docs: improve execution instructions`
+
+Ejemplo invalido:
+
+- `update test`
+
 Ejecucion smoke principal:
 
 ```bash
