@@ -218,3 +218,9 @@ Ejemplos:
 ### Nota operativa
 
 `test:report` levanta Appium en puerto dedicado (`4725`) para evitar conflictos con servidores Appium ya activos.
+
+### Evidencia en video
+
+Video de ejecucion:
+
+- https://drive.google.com/file/d/1O5rrbi6SY3tmj4NjcnlxJEm-Ix0hdqC9/view?usp=sharing
